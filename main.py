@@ -85,16 +85,41 @@ def selectionner_match(event):
         # Obtenir les données de mise pour le match sélectionné
         donnees_mises = obtenir_mises(id_match)
 
+        # Créer un dictionnaire pour stocker les équipes et leurs comptes de mises
+        equipes_mises = {values[0]: 0, values[1]: 0}
+
+        # Compter les mises par équipe
+        for cote1, cote2, id_utilisateur in donnees_mises:
+            if cote1:
+                equipes_mises[values[0]] += 1  # Équipe 1
+            if cote2:
+                equipes_mises[values[1]] += 1  # Équipe 2
+
         # Afficher les données de mise
         print("Match sélectionné:", values)
-        for donnees in donnees_mises:
-            cote1, cote2, id_utilisateur = donnees
-            print("Cote 1:", cote1)
-            print("Cote 2:", cote2)
-            print("ID utilisateur:", id_utilisateur)
+        for equipe, compte in equipes_mises.items():
+            print("Équipe:", equipe)
+            print("Nombre de mises:", compte)
 
         # Enregistrer l'ID du match sélectionné
         id_match_selection = id_match
+
+        # Créer des étiquettes pour afficher les cotisations
+        lbl_cote1 = tk.Label(fenetre, text="Cote 1: " + str(cote1))
+        lbl_cote1.pack()
+
+        lbl_cote2 = tk.Label(fenetre, text="Cote 2: " + str(cote2))
+        lbl_cote2.pack()
+
+        lbl_equipe = tk.Label(fenetre, text= equipe)
+        lbl_equipe.pack()
+
+        lbl_compte = tk.Label(fenetre, text= compte)
+        lbl_compte.pack()
+
+
+        
+
 
         # Créer une nouvelle fenêtre pour saisir les commentaires et le score
         frame_inputs = ttk.Frame(fenetre)
