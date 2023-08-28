@@ -13,6 +13,8 @@ config = {
     'database': 'bdsuperbowl'
 }
 
+
+
 # Variable para almacenar el ID del partido seleccionado
 id_match_selection = None
 entry_commentaires = None
@@ -59,9 +61,13 @@ def obtenir_mises(id_match):
     return results
 
 def afficher_message_erreur(message):
+    global lbl_erreur
+    
+    if lbl_erreur is not None:
+        lbl_erreur.destroy()  # Destruir el widget existente si hay uno
+    
     lbl_erreur = tk.Label(frame_inputs, fg="red", text=message)
     lbl_erreur.pack()
-
 # Fonction pour enregistrer les commentaires et le score d'un match
 def enregistrer_commentaires_et_score(id_match, commentaires, score):
     global lbl_erreur
@@ -131,7 +137,8 @@ def selectionner_match(event):
             obtenir_donnes = obtenir_donnees_du_jour()
 
             for result in obtenir_donnes:
-                cote1, cote2, equipe1, equipe2, commentaires, score = result[6], result[7], result[1], result[2], result[8], result[10]
+                equipe1, equipe2, cote1, cote2, commentaires, score = result[1], result[2], result[6], result[7], result[8], result[10]
+
 
             # Créer des étiquettes pour afficher les cotisations
             lbl_cote1 = tk.Label(frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
@@ -139,6 +146,10 @@ def selectionner_match(event):
 
             lbl_cote2 = tk.Label(frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
             lbl_cote2.pack()
+
+        
+
+           
 
             for equipe, compte in equipes_mises.items():
                 text_label_selection = "Nombre de mises pour " + equipe + ": " + str(compte)
@@ -161,8 +172,50 @@ def selectionner_match(event):
             btn_enregistrer = tk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_score.get()))
             btn_enregistrer.pack()
 
+            # Bouton cloturer match
+            btn_cloturer = tk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
+            btn_cloturer.pack()
+
+          
+
     else:
         nettoyer_fenetre_donnees_match()
+
+
+def cloturer_partie(id_match):
+    global id_match_selection
+
+    if id_match_selection is not None:
+        # Connexion a la base de datos
+        conn = mysql.connector.connect(**config)
+        cursor = conn.cursor()
+
+        # Mise à jour de l'état "fin" du match à "Terminé"
+        query = "UPDATE matchs SET statut = %s WHERE id = %s"
+        cursor.execute(query, ("Terminé", id_match_selection))
+
+        # Enregistrer les modifications dans la base de données
+        conn.commit()
+
+        # Fermeture du curseur et de la connexion
+        cursor.close()
+        conn.close()
+
+        # Actualizar la ventana con los cambios
+        nettoyer_fenetre_donnees_match()
+        
+
+        # Mensaje de éxito
+        afficher_message_erreur("Match cloturé")
+
+        fenetre.after(2000, lambda: afficher_message_erreur(""))
+    else:
+        # Mensaje de error si no se ha seleccionado ningún partido
+        afficher_message_erreur("Veuillez sélectionner un match avant de clore.")
+
+
+
+
 
 # Créer la fenêtre de l'application
 fenetre = ThemedTk(theme="default")
@@ -183,6 +236,7 @@ table_matchs.heading("equipe2", text="Équipe 2")
 table_matchs.heading("jour", text="Jour")
 table_matchs.heading("debut", text="Début")
 table_matchs.heading("fin", text="Fin")
+
 
 # Configurer les colonnes pour qu'elles soient fixes et non modifiables
 largeurs_colonnes = {"equipe1": 100, "equipe2": 100, "jour": 100, "debut": 100, "fin": 100}
