@@ -95,6 +95,10 @@ def enregistrer_commentaires_et_score(id_match, commentaires, score):
 
     nettoyer_fenetre_donnees_match()
 
+    afficher_message_erreur("Commentaires et score enregistrés avec succès.")
+
+    fenetre.after(2000, lambda: afficher_message_erreur(""))
+
 # Fonction pour nettoyer la fenêtre des données du match
 def nettoyer_fenetre_donnees_match():
     global id_match_selection, entry_commentaires, frame_inputs
@@ -176,10 +180,16 @@ def selectionner_match(event):
             btn_cloturer = tk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
             btn_cloturer.pack()
 
+            # Bouton sortir match
+            btn_sortir = tk.Button(frame_inputs, text="Sortir", command=sortir)
+            btn_sortir.pack()
+
           
 
     else:
         nettoyer_fenetre_donnees_match()
+
+
 
 
 def cloturer_partie(id_match):
@@ -214,6 +224,11 @@ def cloturer_partie(id_match):
         afficher_message_erreur("Veuillez sélectionner un match avant de clore.")
 
 
+
+def sortir():
+    global id_match_selection
+    nettoyer_fenetre_donnees_match()
+    id_match_selection = None
 
 
 
