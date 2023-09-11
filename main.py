@@ -116,80 +116,70 @@ def selectionner_match(event):
     selected_items = table_matchs.selection()
     if selected_items:
         item = selected_items[0]
+        id_match = table_matchs.item(item, 'text')
+        values = table_matchs.item(item, 'values')
 
-        if id_match_selection is None:
-            id_match = table_matchs.item(item, 'text')
-            values = table_matchs.item(item, 'values')
+        # Obtenir les données de mise pour le match sélectionné
+        donnees_mises = obtenir_mises(id_match)
 
-            # Obtenir les données de mise pour le match sélectionné
-            donnees_mises = obtenir_mises(id_match)
+        # Créer un dictionnaire pour stocker les équipes et leurs comptes de mises
+        equipes_mises = {values[0]: 0, values[1]: 0}
 
-            # Créer un dictionnaire pour stocker les équipes et leurs comptes de mises
-            equipes_mises = {values[0]: 0, values[1]: 0}
+        # Compter les mises par équipe
+        for cote1, cote2, id_utilisateur in donnees_mises:
+            if cote1:
+                equipes_mises[values[0]] += 1  # Équipe 1
+            if cote2:
+                equipes_mises[values[1]] += 1  # Équipe 2
 
-            # Compter les mises par équipe
-            for cote1, cote2, id_utilisateur in donnees_mises:
-                if cote1:
-                    equipes_mises[values[0]] += 1  # Équipe 1
-                if cote2:
-                    equipes_mises[values[1]] += 1  # Équipe 2
+        # Enregistrer l'ID du match sélectionné
+        id_match_selection = id_match
 
-            # Enregistrer l'ID du match sélectionné
-            id_match_selection = id_match
+        # Nettoyer la fenêtre des données du match
+        nettoyer_fenetre_donnees_match()
 
-            # Obtener les résultats
-            obtenir_donnes = obtenir_donnees_du_jour()
-
-            for result in obtenir_donnes:
-                equipe1, equipe2, cote1, cote2, commentaires, score = result[1], result[2], result[6], result[7], result[8], result[10]
+        # Obtener les résultats
+        equipe1, equipe2, cote1, cote2 = values[0], values[1], values[5], values[6] 
 
 
-            # Créer des étiquettes pour afficher les cotisations
-            lbl_cote1 = tk.Label(frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
-            lbl_cote1.pack()
+        # Créer des étiquettes pour afficher les cotisations
+        lbl_cote1 = tk.Label(frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
+        lbl_cote1.pack()
 
-            lbl_cote2 = tk.Label(frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
-            lbl_cote2.pack()
+        lbl_cote2 = tk.Label(frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
+        lbl_cote2.pack()
 
-        
+        for equipe, compte in equipes_mises.items():
+            text_label_selection = "Nombre de mises pour " + equipe + ": " + str(compte)
+            lbl_equipe = tk.Label(frame_inputs, text=text_label_selection)
+            lbl_equipe.pack()
 
-           
+        # Étiquette et champ de saisie pour les commentaires
+        lbl_commentaires = tk.Label(frame_inputs, text="Commentaires:")
+        lbl_commentaires.pack()
+        entry_commentaires = tk.Entry(frame_inputs)
+        entry_commentaires.pack()
 
-            for equipe, compte in equipes_mises.items():
-                text_label_selection = "Nombre de mises pour " + equipe + ": " + str(compte)
-                lbl_equipe = tk.Label(frame_inputs, text=text_label_selection)
-                lbl_equipe.pack()
+        # Étiquette et champ de saisie pour le score
+        lbl_score = tk.Label(frame_inputs, text="Score:")
+        lbl_score.pack()
+        entry_score = tk.Entry(frame_inputs)
+        entry_score.pack()
 
-            # Étiquette et champ de saisie pour les commentaires
-            lbl_commentaires = tk.Label(frame_inputs, text="Commentaires:")
-            lbl_commentaires.pack()
-            entry_commentaires = tk.Entry(frame_inputs)
-            entry_commentaires.pack()
+        # Bouton pour enregistrer les commentaires et le score
+        btn_enregistrer = tk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_score.get()))
+        btn_enregistrer.pack()
 
-            # Étiquette et champ de saisie pour le score
-            lbl_score = tk.Label(frame_inputs, text="Score:")
-            lbl_score.pack()
-            entry_score = tk.Entry(frame_inputs)
-            entry_score.pack()
+        # Bouton cloturer match
+        btn_cloturer = tk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
+        btn_cloturer.pack()
 
-            # Bouton pour enregistrer les commentaires et le score
-            btn_enregistrer = tk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_score.get()))
-            btn_enregistrer.pack()
-
-            # Bouton cloturer match
-            btn_cloturer = tk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
-            btn_cloturer.pack()
-
-            # Bouton sortir match
-            btn_sortir = tk.Button(frame_inputs, text="Sortir", command=sortir)
-            btn_sortir.pack()
-
-          
+        # Bouton sortir match
+        btn_sortir = tk.Button(frame_inputs, text="Sortir", command=sortir)
+        btn_sortir.pack()
 
     else:
         nettoyer_fenetre_donnees_match()
-
-
 
 
 def cloturer_partie(id_match):
@@ -277,3 +267,5 @@ frame_inputs.pack(pady=10)
 
 # Démarrer la boucle d'événements de l'application
 fenetre.mainloop()
+
+
