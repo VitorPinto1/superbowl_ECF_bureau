@@ -29,7 +29,7 @@ def obtenir_donnees_du_jour():
     date_actuelle = date.today()
 
     # Exécution de la requête
-    query = "SELECT id, equipe1, equipe2, jour, debut, fin, cote1, cote2, commentaires, statut, score  FROM matchs WHERE jour = %s"
+    query = "SELECT id, equipe1, equipe2, jour, debut, fin, cote1, cote2, commentaires, statut, score, but1, but2  FROM matchs WHERE jour = %s"
     cursor.execute(query, (date_actuelle,))
 
     # Obtenir les résultats
@@ -69,10 +69,10 @@ def afficher_message_erreur(message):
     lbl_erreur = tk.Label(frame_inputs, fg="red", text=message)
     lbl_erreur.pack()
 # Fonction pour enregistrer les commentaires et le score d'un match
-def enregistrer_commentaires_et_score(id_match, commentaires, score):
+def enregistrer_commentaires_et_score(id_match, commentaires, but1, but2):
     global lbl_erreur
     
-    if not commentaires or not score:
+    if not commentaires or not but1 and but2:
         # Afficher un message d'erreur si l'un des champs est vide
         afficher_message_erreur("Veuillez remplir tous les champs avant d'enregistrer.")
         return
@@ -83,8 +83,8 @@ def enregistrer_commentaires_et_score(id_match, commentaires, score):
     cursor = conn.cursor()
 
     # Mise à jour du match avec les commentaires et le score
-    query = "UPDATE matchs SET commentaires = %s, score = %s WHERE id = %s"
-    cursor.execute(query, (commentaires, score, id_match))
+    query = "UPDATE matchs SET commentaires = %s, but1 = %s, but2 = %s WHERE id = %s"
+    cursor.execute(query, (commentaires, but1, but2, id_match))
 
     # Enregistrer les modifications dans la base de données
     conn.commit()
@@ -98,6 +98,7 @@ def enregistrer_commentaires_et_score(id_match, commentaires, score):
     afficher_message_erreur("Commentaires et score enregistrés avec succès.")
 
     fenetre.after(2000, lambda: afficher_message_erreur(""))
+
 
 # Fonction pour nettoyer la fenêtre des données du match
 def nettoyer_fenetre_donnees_match():
@@ -160,14 +161,21 @@ def selectionner_match(event):
         entry_commentaires = tk.Entry(frame_inputs)
         entry_commentaires.pack()
 
+        
         # Étiquette et champ de saisie pour le score
-        lbl_score = tk.Label(frame_inputs, text="Score:")
-        lbl_score.pack()
-        entry_score = tk.Entry(frame_inputs)
-        entry_score.pack()
+        lbl_but1 = tk.Label(frame_inputs, text="Score : " + equipe1)
+        lbl_but1.pack()
+        entry_but1 = tk.Entry(frame_inputs)
+        entry_but1.pack()
+
+        # Étiquette et champ de saisie pour le score
+        lbl_but2 = tk.Label(frame_inputs, text="Score : " + equipe2)
+        lbl_but2.pack()
+        entry_but2 = tk.Entry(frame_inputs)
+        entry_but2.pack()
 
         # Bouton pour enregistrer les commentaires et le score
-        btn_enregistrer = tk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_score.get()))
+        btn_enregistrer = tk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_but1.get(), entry_but2.get()))
         btn_enregistrer.pack()
 
         # Bouton cloturer match
@@ -180,19 +188,30 @@ def selectionner_match(event):
 
     else:
         nettoyer_fenetre_donnees_match()
+        
+
 
 
 def cloturer_partie(id_match):
-    global id_match_selection
-
-    if id_match_selection is not None:
+    if id_match is not None:
         # Connexion a la base de datos
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
 
         # Mise à jour de l'état "fin" du match à "Terminé"
         query = "UPDATE matchs SET statut = %s WHERE id = %s"
-        cursor.execute(query, ("Terminé", id_match_selection))
+        cursor.execute(query, ("Terminé", id_match))
+
+        query_vainqueur = """
+            UPDATE matchs
+            SET vainqueur = CASE
+                WHEN but1 > but2 THEN equipe1
+                WHEN but1 < but2 THEN equipe2
+                ELSE '-'
+            END
+            WHERE id = %s;
+        """
+        cursor.execute(query_vainqueur, (id_match,))
 
         # Enregistrer les modifications dans la base de données
         conn.commit()
@@ -241,6 +260,7 @@ table_matchs.heading("equipe2", text="Équipe 2")
 table_matchs.heading("jour", text="Jour")
 table_matchs.heading("debut", text="Début")
 table_matchs.heading("fin", text="Fin")
+
 
 
 # Configurer les colonnes pour qu'elles soient fixes et non modifiables
