@@ -1,4 +1,5 @@
 import mysql.connector
+from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from datetime import date
@@ -19,6 +20,29 @@ config = {
 id_match_selection = None
 entry_commentaires = None
 lbl_erreur = None
+
+def mettre_a_jour_etat_matchs_en_cours():
+    # Connexion à la base de données
+    conn = mysql.connector.connect(**config)
+    curseur = conn.cursor()
+
+    # Obtenir la date et l'heure actuelles
+    date_heure_actuelles = datetime.now()
+
+    # Mettre à jour l'état des matchs en cours
+    requete = "UPDATE matchs SET statut = 'En cours' WHERE jour = %s AND debut <= %s AND fin >= %s"
+    curseur.execute(requete, (date_heure_actuelles.date(), date_heure_actuelles.time(), date_heure_actuelles.time()))
+
+    # Enregistrer les modifications dans la base de données
+    conn.commit()
+
+    # Fermer le curseur et la connexion
+    curseur.close()
+    conn.close()
+
+# Appeler la fonction pour mettre à jour l'état des matchs en cours au début
+mettre_a_jour_etat_matchs_en_cours()
+
 # Fonction pour obtenir les données de la table "matchs"
 def obtenir_donnees_du_jour():
     # Connexion à la base de données
@@ -194,7 +218,7 @@ def selectionner_match(event):
 
 def cloturer_partie(id_match):
     if id_match is not None:
-        # Connexion a la base de datos
+        # Connexion a la base de données
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
 
