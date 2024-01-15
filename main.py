@@ -4,14 +4,17 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import date
 from ttkthemes import ThemedTk
+from dotenv import load_dotenv
 
+import os
+load_dotenv ()
 # Configuration de la base de données
 config = {
-    'host': 'localhost',
-    'port': 3306,
-    'user': 'PEPE',
-    'password': 'PEPE',
-    'database': 'bdsuperbowl'
+    'host': os.getenv('DB_HOST'),
+    'port': int(os.getenv('DB_PORT')),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_DATABASE')
 }
 
 
