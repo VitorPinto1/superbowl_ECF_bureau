@@ -5,6 +5,10 @@ from tkinter import ttk
 from datetime import date
 from ttkthemes import ThemedTk
 from dotenv import load_dotenv
+from tkinter import PhotoImage
+from tkinter import Canvas
+from PIL import Image, ImageTk
+
 
 import os
 load_dotenv ()
@@ -116,7 +120,7 @@ def obtenir_mises(id_match):
 
     return results
 
-def afficher_message_erreur(message):
+def afficher_message(message):
     global lbl_erreur
     
     if lbl_erreur is not None:
@@ -124,22 +128,23 @@ def afficher_message_erreur(message):
     
     lbl_erreur = tk.Label(frame_inputs, fg="red", text=message)
     lbl_erreur.pack()
+
 # Fonction pour enregistrer les commentaires et le score d'un match
 def enregistrer_commentaires_et_score(id_match, commentaires, but1, but2):
     global lbl_erreur
     
     if not commentaires or not but1 and but2:
         # Afficher un message d'erreur si l'un des champs est vide
-        afficher_message_erreur("Veuillez remplir tous les champs avant d'enregistrer.")
+        afficher_message("Veuillez remplir tous les champs avant d'enregistrer.")
         return
     try:
             but1_num = int(but1)
             but2_num = int(but2)
             if not (0 <= but1_num <= 20 and 0 <= but2_num <= 20):
-                afficher_message_erreur("Les scores doivent être des nombres entre 0 et 20.")
+                afficher_message("Les scores doivent être des nombres entre 0 et 20.")
                 return
     except ValueError:
-            afficher_message_erreur("Les scores doivent être des nombres entre 0 et 20.")
+            afficher_message("Les scores doivent être des nombres entre 0 et 20.")
             return
         
     # Connexion à la base de données
@@ -159,9 +164,9 @@ def enregistrer_commentaires_et_score(id_match, commentaires, but1, but2):
 
     nettoyer_fenetre_donnees_match()
 
-    afficher_message_erreur("Commentaires et score enregistrés avec succès.")
+    afficher_message("Commentaires et score enregistrés avec succès.")
 
-    fenetre.after(2000, lambda: afficher_message_erreur(""))
+    fenetre.after(2000, lambda: afficher_message(""))
 
 
 # Fonction pour nettoyer la fenêtre des données du match
@@ -170,7 +175,7 @@ def nettoyer_fenetre_donnees_match():
 
     id_match_selection = None
 
-    # Nettoyer la fenêtre des données du match
+   
     for widget in frame_inputs.winfo_children():
         widget.destroy()
 
@@ -252,6 +257,7 @@ def selectionner_match(event):
 
     else:
         nettoyer_fenetre_donnees_match()
+    
         
 
 
@@ -289,12 +295,14 @@ def cloturer_partie(id_match):
         
 
         # Mensaje de éxito
-        afficher_message_erreur("Match cloturé")
+        afficher_message("Match cloturé")
 
-        fenetre.after(2000, lambda: afficher_message_erreur(""))
+        fenetre.after(2000, lambda: afficher_message(""))
+
+       
     else:
         # Mensaje de error si no se ha seleccionado ningún partido
-        afficher_message_erreur("Veuillez sélectionner un match avant de clore.")
+        afficher_message("Veuillez sélectionner un match avant de clore.")
 
 
 
@@ -302,14 +310,28 @@ def sortir():
     global id_match_selection
     nettoyer_fenetre_donnees_match()
     id_match_selection = None
+   
+
 
 
 
 # Créer la fenêtre de l'application
 
-fenetre = ThemedTk(theme="adapta")
+fenetre = ThemedTk(theme="adapta") 
 fenetre.title("Matchs")
-fenetre.geometry("900x700")
+fenetre.geometry("1200x900")
+fenetre.minsize(1000,800)
+
+
+# Cargar la imagen de fondo (ajusta la ruta a tu imagen)
+background_image = Image.open("Ressources/background3.jpg")
+background_image = background_image.resize((fenetre.winfo_screenwidth(), fenetre.winfo_screenheight()), Image.LANCZOS)
+
+background_image = ImageTk.PhotoImage(background_image)
+
+# Crear un widget Label para mostrar la imagen
+label_fondo = tk.Label(fenetre, image=background_image)
+label_fondo.place(relwidth=1, relheight=1)
 
 # Créer un arbre de données avec un style amélioré
 style = ttk.Style(fenetre)
@@ -327,11 +349,25 @@ table_matchs.heading("jour", text="Jour")
 table_matchs.heading("debut", text="Début")
 table_matchs.heading("fin", text="Fin")
 
+
+frame_boutons = tk.Frame(fenetre, background= "black")
+frame_boutons.pack(pady=10)
+
+# Créer les boutons et les ajouter au cadre
+btn_du_jour = ttk.Button(frame_boutons, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
+btn_du_jour.pack(side=tk.LEFT, padx=10, pady=50)  # Utiliser side=tk.LEFT pour aligner horizontalement
+
+btn_tous_les_matchs = ttk.Button(frame_boutons, text="Tous les matchs", command=lambda: charger_donnes("tous"))
+btn_tous_les_matchs.pack(side=tk.LEFT, padx=10, pady=50)
+
+
+
+""""
 btn_du_jour = ttk.Button(fenetre, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
 btn_du_jour.pack()
 
 btn_tous_les_matchs = ttk.Button(fenetre, text="Tous les matchs", command=lambda: charger_donnes("tous"))
-btn_tous_les_matchs.pack()
+btn_tous_les_matchs.pack()"""
 
 # Configurer les colonnes pour qu'elles soient fixes et non modifiables
 largeurs_colonnes = {"equipe1": 200, "equipe2": 200, "jour": 100, "debut": 100, "fin": 100}
