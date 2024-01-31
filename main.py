@@ -5,7 +5,6 @@ from tkinter import ttk
 from datetime import date
 from ttkthemes import ThemedTk
 from dotenv import load_dotenv
-from PIL import Image, ImageTk
 
 import os
 load_dotenv ()
@@ -133,8 +132,16 @@ def enregistrer_commentaires_et_score(id_match, commentaires, but1, but2):
         # Afficher un message d'erreur si l'un des champs est vide
         afficher_message_erreur("Veuillez remplir tous les champs avant d'enregistrer.")
         return
-
-    
+    try:
+            but1_num = int(but1)
+            but2_num = int(but2)
+            if not (0 <= but1_num <= 20 and 0 <= but2_num <= 20):
+                afficher_message_erreur("Les scores doivent être des nombres entre 0 et 20.")
+                return
+    except ValueError:
+            afficher_message_erreur("Les scores doivent être des nombres entre 0 et 20.")
+            return
+        
     # Connexion à la base de données
     conn = mysql.connector.connect(**config)
     cursor = conn.cursor()
@@ -201,46 +208,46 @@ def selectionner_match(event):
 
 
         # Créer des étiquettes pour afficher les cotisations
-        lbl_cote1 = tk.Label(frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
+        lbl_cote1 = ttk.Label(frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
         lbl_cote1.pack()
 
-        lbl_cote2 = tk.Label(frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
+        lbl_cote2 = ttk.Label(frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
         lbl_cote2.pack()
 
         for equipe, compte in equipes_mises.items():
             text_label_selection = "Nombre de mises pour " + equipe + ": " + str(compte)
-            lbl_equipe = tk.Label(frame_inputs, text=text_label_selection)
+            lbl_equipe = ttk.Label(frame_inputs, text=text_label_selection)
             lbl_equipe.pack()
 
         # Étiquette et champ de saisie pour les commentaires
-        lbl_commentaires = tk.Label(frame_inputs, text="Commentaires:")
+        lbl_commentaires = ttk.Label(frame_inputs, text="Commentaires:")
         lbl_commentaires.pack()
-        entry_commentaires = tk.Entry(frame_inputs)
+        entry_commentaires = ttk.Entry(frame_inputs)
         entry_commentaires.pack()
 
         
         # Étiquette et champ de saisie pour le score
-        lbl_but1 = tk.Label(frame_inputs, text="Score : " + equipe1)
+        lbl_but1 = ttk.Label(frame_inputs, text="Score : " + equipe1)
         lbl_but1.pack()
-        entry_but1 = tk.Entry(frame_inputs)
+        entry_but1 = ttk.Entry(frame_inputs)
         entry_but1.pack()
 
         # Étiquette et champ de saisie pour le score
-        lbl_but2 = tk.Label(frame_inputs, text="Score : " + equipe2)
+        lbl_but2 = ttk.Label(frame_inputs, text="Score : " + equipe2)
         lbl_but2.pack()
-        entry_but2 = tk.Entry(frame_inputs)
+        entry_but2 = ttk.Entry(frame_inputs)
         entry_but2.pack()
 
         # Bouton pour enregistrer les commentaires et le score
-        btn_enregistrer = tk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_but1.get(), entry_but2.get()))
+        btn_enregistrer = ttk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_but1.get(), entry_but2.get()))
         btn_enregistrer.pack()
 
         # Bouton cloturer match
-        btn_cloturer = tk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
+        btn_cloturer = ttk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
         btn_cloturer.pack()
 
         # Bouton sortir match
-        btn_sortir = tk.Button(frame_inputs, text="Sortir", command=sortir)
+        btn_sortir = ttk.Button(frame_inputs, text="Sortir", command=sortir)
         btn_sortir.pack()
 
     else:
@@ -300,16 +307,9 @@ def sortir():
 
 # Créer la fenêtre de l'application
 
-fenetre = ThemedTk(theme="default")
+fenetre = ThemedTk(theme="adapta")
 fenetre.title("Matchs")
 fenetre.geometry("900x700")
-
-image_path = "Ressources/background3.jpg"
-image = Image.open(image_path)
-image = image.resize((900, 700))
-background_image = ImageTk.PhotoImage(image)
-background_label = tk.Label(fenetre, image=background_image)
-background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Créer un arbre de données avec un style amélioré
 style = ttk.Style(fenetre)
@@ -327,10 +327,10 @@ table_matchs.heading("jour", text="Jour")
 table_matchs.heading("debut", text="Début")
 table_matchs.heading("fin", text="Fin")
 
-btn_du_jour = tk.Button(fenetre, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
+btn_du_jour = ttk.Button(fenetre, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
 btn_du_jour.pack()
 
-btn_tous_les_matchs = tk.Button(fenetre, text="Tous les matchs", command=lambda: charger_donnes("tous"))
+btn_tous_les_matchs = ttk.Button(fenetre, text="Tous les matchs", command=lambda: charger_donnes("tous"))
 btn_tous_les_matchs.pack()
 
 # Configurer les colonnes pour qu'elles soient fixes et non modifiables
