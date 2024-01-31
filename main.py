@@ -183,6 +183,9 @@ def nettoyer_fenetre_donnees_match():
 def selectionner_match(event):
     global id_match_selection, entry_commentaires, frame_inputs
 
+    if frame_inputs is not None:
+        frame_inputs.pack(pady=10)
+
     selected_items = table_matchs.selection()
     if selected_items:
         item = selected_items[0]
@@ -307,8 +310,9 @@ def cloturer_partie(id_match):
 
 
 def sortir():
-    global id_match_selection
+    global id_match_selection, frame_inputs
     nettoyer_fenetre_donnees_match()
+    frame_inputs.pack_forget()
     id_match_selection = None
    
 
