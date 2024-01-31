@@ -24,6 +24,35 @@ id_match_selection = None
 entry_commentaires = None
 lbl_erreur = None
 
+def obtenir_tous_les_matchs():
+    conn = mysql.connector.connect(**config)
+    cursor = conn.cursor()
+
+    query = "SELECT id, equipe1, equipe2, jour, debut, fin, cote1, cote2, commentaires, statut, score, but1, but2 FROM matchs"
+    cursor.execute(query)
+
+    results = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return results
+
+def charger_donnes(tipo):
+    if tipo == "du_jour":
+        datos = obtenir_donnees_du_jour()
+    else:
+        datos = obtenir_tous_les_matchs()
+
+    # Limpia la tabla antes de cargar nuevos datos
+    for i in table_matchs.get_children():
+        table_matchs.delete(i)
+
+    # Insertar los datos en la tabla
+    for row in datos:
+        table_matchs.insert("", tk.END, text=row[0], values=row[1:])
+
+
 def mettre_a_jour_etat_matchs_en_cours():
     # Connexion à la base de données
     conn = mysql.connector.connect(**config)
@@ -269,8 +298,10 @@ def sortir():
 
 
 # Créer la fenêtre de l'application
+
 fenetre = ThemedTk(theme="default")
 fenetre.title("Matchs")
+fenetre.geometry("900x700")
 
 # Créer un arbre de données avec un style amélioré
 style = ttk.Style(fenetre)
@@ -288,10 +319,14 @@ table_matchs.heading("jour", text="Jour")
 table_matchs.heading("debut", text="Début")
 table_matchs.heading("fin", text="Fin")
 
+btn_du_jour = tk.Button(fenetre, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
+btn_du_jour.pack()
 
+btn_tous_les_matchs = tk.Button(fenetre, text="Tous les matchs", command=lambda: charger_donnes("tous"))
+btn_tous_les_matchs.pack()
 
 # Configurer les colonnes pour qu'elles soient fixes et non modifiables
-largeurs_colonnes = {"equipe1": 100, "equipe2": 100, "jour": 100, "debut": 100, "fin": 100}
+largeurs_colonnes = {"equipe1": 200, "equipe2": 200, "jour": 100, "debut": 100, "fin": 100}
 for colonne, largeur in largeurs_colonnes.items():
     table_matchs.column(colonne, width=largeur, anchor=tk.CENTER)
 
@@ -314,5 +349,3 @@ frame_inputs.pack(pady=10)
 
 # Démarrer la boucle d'événements de l'application
 fenetre.mainloop()
-
-
