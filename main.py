@@ -5,6 +5,7 @@ from tkinter import ttk
 from datetime import date
 from ttkthemes import ThemedTk
 from dotenv import load_dotenv
+from PIL import Image, ImageTk
 
 import os
 load_dotenv ()
@@ -302,6 +303,13 @@ def sortir():
 fenetre = ThemedTk(theme="default")
 fenetre.title("Matchs")
 fenetre.geometry("900x700")
+
+image_path = "Ressources/background3.jpg"
+image = Image.open(image_path)
+image = image.resize((900, 700))
+background_image = ImageTk.PhotoImage(image)
+background_label = tk.Label(fenetre, image=background_image)
+background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
 # Créer un arbre de données avec un style amélioré
 style = ttk.Style(fenetre)
