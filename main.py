@@ -23,7 +23,7 @@ config = {
 
 
 
-# Variable para almacenar el ID del partido seleccionado
+# Variable pour stocker l'ID du match sélectionné
 id_match_selection = None
 entry_commentaires = None
 lbl_erreur = None
@@ -48,11 +48,11 @@ def charger_donnes(tipo):
     else:
         datos = obtenir_tous_les_matchs()
 
-    # Limpia la tabla antes de cargar nuevos datos
+    # Efface les données de la table avant de charger les nouvelles
     for i in table_matchs.get_children():
         table_matchs.delete(i)
 
-    # Insertar los datos en la tabla
+    # Insérer les données dans la table
     for row in datos:
         table_matchs.insert("", tk.END, text=row[0], values=row[1:])
 
@@ -124,7 +124,7 @@ def afficher_message(message):
     global lbl_erreur
     
     if lbl_erreur is not None:
-        lbl_erreur.destroy()  # Destruir el widget existente si hay uno
+        lbl_erreur.destroy()  # Détruire le widget existant s'il y en a un
     
     lbl_erreur = tk.Label(frame_inputs, fg="red", text=message)
     lbl_erreur.pack()
@@ -293,18 +293,18 @@ def cloturer_partie(id_match):
         cursor.close()
         conn.close()
 
-        # Actualizar la ventana con los cambios
+        # Mettre à jour la fenêtre avec les modifications
         nettoyer_fenetre_donnees_match()
         
 
-        # Mensaje de éxito
+        # Message de succès
         afficher_message("Match cloturé")
 
         fenetre.after(2000, lambda: afficher_message(""))
 
        
     else:
-        # Mensaje de error si no se ha seleccionado ningún partido
+        # Message d'erreur si aucun match n'a été sélectionné
         afficher_message("Veuillez sélectionner un match avant de clore.")
 
 
@@ -327,13 +327,13 @@ fenetre.geometry("1200x900")
 fenetre.minsize(1000,800)
 
 
-# Cargar la imagen de fondo (ajusta la ruta a tu imagen)
+# Charger l'image de fond
 background_image = Image.open("Ressources/background3.jpg")
 background_image = background_image.resize((fenetre.winfo_screenwidth(), fenetre.winfo_screenheight()), Image.LANCZOS)
 
 background_image = ImageTk.PhotoImage(background_image)
 
-# Crear un widget Label para mostrar la imagen
+# Créer un widget Label pour afficher l'image
 label_fondo = tk.Label(fenetre, image=background_image)
 label_fondo.place(relwidth=1, relheight=1)
 
@@ -366,12 +366,7 @@ btn_tous_les_matchs.pack(side=tk.LEFT, padx=10, pady=50)
 
 
 
-""""
-btn_du_jour = ttk.Button(fenetre, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
-btn_du_jour.pack()
 
-btn_tous_les_matchs = ttk.Button(fenetre, text="Tous les matchs", command=lambda: charger_donnes("tous"))
-btn_tous_les_matchs.pack()"""
 
 # Configurer les colonnes pour qu'elles soient fixes et non modifiables
 largeurs_colonnes = {"equipe1": 200, "equipe2": 200, "jour": 100, "debut": 100, "fin": 100}
