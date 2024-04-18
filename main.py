@@ -358,7 +358,7 @@ frame_boutons = tk.Frame(fenetre, background= "black")
 frame_boutons.pack(pady=10)
 
 # Créer les boutons et les ajouter au cadre
-btn_du_jour = ttk.Button(frame_boutons, text="Matches du Jour", command=lambda: charger_donnes("du_jour"))
+btn_du_jour = ttk.Button(frame_boutons, text="Matchs du Jour", command=lambda: charger_donnes("du_jour"))
 btn_du_jour.pack(side=tk.LEFT, padx=10, pady=50)  # Utiliser side=tk.LEFT pour aligner horizontalement
 
 btn_tous_les_matchs = ttk.Button(frame_boutons, text="Tous les matchs", command=lambda: charger_donnes("tous"))
