@@ -1,18 +1,14 @@
-import mysql.connector
-from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
-from datetime import date
 from ttkthemes import ThemedTk
 from dotenv import load_dotenv
-from tkinter import PhotoImage
-from tkinter import Canvas
 from PIL import Image, ImageTk
-
-
+from bd_logique import BdLogique  
+from match_logique import MatchLogique 
 import os
-load_dotenv ()
-# Configuration de la base de données
+
+# Charger les variables d'environnement à partir du fichier .env
+load_dotenv()
 config = {
     'host': os.getenv('DB_HOST'),
     'port': int(os.getenv('DB_PORT')),
@@ -22,373 +18,197 @@ config = {
 }
 
 
+class BureauApp:
+    # Méthode pour initialiser la logique des matchs
+    def __init__(self, match_logique):
+        self.match_logique = match_logique
+        self.id_match_selection = None
+        self.entry_commentaires = None
+        self.lbl_erreur = None
+        self.setup_gui()
 
-# Variable pour stocker l'ID du match sélectionné
-id_match_selection = None
-entry_commentaires = None
-lbl_erreur = None
+    def setup_gui(self):
+        self.fenetre = ThemedTk(theme="adapta")
+        self.fenetre.title("Matchs")
+        self.fenetre.geometry("1200x900")
+        self.fenetre.minsize(1000, 800)
 
-def obtenir_tous_les_matchs():
-    conn = mysql.connector.connect(**config)
-    cursor = conn.cursor()
+        background_image = Image.open("Ressources/background3.jpg")
+        background_image = background_image.resize((self.fenetre.winfo_screenwidth(), self.fenetre.winfo_screenheight()), Image.LANCZOS)
+        self.background_image = ImageTk.PhotoImage(background_image)
+        self.label_background = tk.Label(self.fenetre, image=self.background_image)
+        self.label_background.place(relwidth=1, relheight=1)
 
-    query = "SELECT id, equipe1, equipe2, jour, debut, fin, cote1, cote2, commentaires, statut, score, but1, but2 FROM matchs"
-    cursor.execute(query)
+        self.setup_buttons()
 
-    results = cursor.fetchall()
+        self.table_matchs = ttk.Treeview(self.fenetre, columns=("equipe1", "equipe2", "jour", "debut", "fin"), style="Custom.Treeview")
+        self.setup_table()  
 
-    cursor.close()
-    conn.close()
+        self.frame_inputs = ttk.Frame(self.fenetre)
+        self.frame_inputs.pack(pady=10)
 
-    return results
+        self.match_logique.mettre_a_jour_etat_matchs_en_cours()
+        self.data_charge("du_jour")
 
-def charger_donnes(tipo):
-    if tipo == "du_jour":
-        datos = obtenir_donnees_du_jour()
-    else:
-        datos = obtenir_tous_les_matchs()
-
-    # Efface les données de la table avant de charger les nouvelles
-    for i in table_matchs.get_children():
-        table_matchs.delete(i)
-
-    # Insérer les données dans la table
-    for row in datos:
-        table_matchs.insert("", tk.END, text=row[0], values=row[1:])
-
-
-def mettre_a_jour_etat_matchs_en_cours():
-    # Connexion à la base de données
-    conn = mysql.connector.connect(**config)
-    curseur = conn.cursor()
-
-    # Obtenir la date et l'heure actuelles
-    date_heure_actuelles = datetime.now()
-
-    # Mettre à jour l'état des matchs en cours
-    requete = "UPDATE matchs SET statut = 'En cours' WHERE jour = %s AND debut <= %s AND fin >= %s"
-    curseur.execute(requete, (date_heure_actuelles.date(), date_heure_actuelles.time(), date_heure_actuelles.time()))
-
-    # Enregistrer les modifications dans la base de données
-    conn.commit()
-
-    # Fermer le curseur et la connexion
-    curseur.close()
-    conn.close()
-
-# Appeler la fonction pour mettre à jour l'état des matchs en cours au début
-mettre_a_jour_etat_matchs_en_cours()
-
-# Fonction pour obtenir les données de la table "matchs"
-def obtenir_donnees_du_jour():
-    # Connexion à la base de données
-    conn = mysql.connector.connect(**config)
-    cursor = conn.cursor()
-
-    # Obtenir la date actuelle
-    date_actuelle = date.today()
-
-    # Exécution de la requête
-    query = "SELECT id, equipe1, equipe2, jour, debut, fin, cote1, cote2, commentaires, statut, score, but1, but2  FROM matchs WHERE jour = %s"
-    cursor.execute(query, (date_actuelle,))
-
-    # Obtenir les résultats
-    results = cursor.fetchall()
-
-    # Fermeture du curseur et de la connexion
-    cursor.close()
-    conn.close()
-
-    return results
-
-# Fonction pour obtenir les données de mise pour un match spécifique
-def obtenir_mises(id_match):
-    # Connexion à la base de données
-    conn = mysql.connector.connect(**config)
-    cursor = conn.cursor()
-
-    # Exécution de la requête
-    query = "SELECT cote1, cote2, id_utilisateur FROM mises WHERE id_match = %s"
-    cursor.execute(query, (id_match,))
-
-    # Obtenir les résultats
-    results = cursor.fetchall()
-
-    # Fermeture du curseur et de la connexion
-    cursor.close()
-    conn.close()
-
-    return results
-
-def afficher_message(message):
-    global lbl_erreur
+        self.fenetre.mainloop()
     
-    if lbl_erreur is not None:
-        lbl_erreur.destroy()  # Détruire le widget existant s'il y en a un
-    
-    lbl_erreur = tk.Label(frame_inputs, fg="red", text=message)
-    lbl_erreur.pack()
+    def setup_table(self):
+        style = ttk.Style(self.fenetre)
+        style.configure("Custom.Treeview", highlightthickness=0, bd=0)
+        style.configure("Custom.Treeview.Heading", font=('Helvetica', 10, 'bold'))
+        self.table_matchs["show"] = "headings"
+        self.table_matchs.heading("equipe1", text="Équipe 1")
+        self.table_matchs.heading("equipe2", text="Équipe 2")
+        self.table_matchs.heading("jour", text="Jour")
+        self.table_matchs.heading("debut", text="Début")
+        self.table_matchs.heading("fin", text="Fin")
 
-# Fonction pour enregistrer les commentaires et le score d'un match
-def enregistrer_commentaires_et_score(id_match, commentaires, but1, but2):
-    global lbl_erreur
-    
-    if not commentaires or not but1 and but2:
-        # Afficher un message d'erreur si l'un des champs est vide
-        afficher_message("Veuillez remplir tous les champs avant d'enregistrer.")
-        return
-    try:
-            but1_num = int(but1)
-            but2_num = int(but2)
-            if not (0 <= but1_num <= 20 and 0 <= but2_num <= 20):
-                afficher_message("Les scores doivent être des nombres entre 0 et 20.")
-                return
-    except ValueError:
-            afficher_message("Les scores doivent être des nombres entre 0 et 20.")
+        self.column_widths = {"equipe1": 200, "equipe2": 200, "jour": 200, "debut": 200, "fin": 200}
+        for column, width in self.column_widths.items():
+            self.table_matchs.column(column, width=width, anchor=tk.CENTER, stretch=False)
+
+        self.table_matchs.bind("<Configure>", self.prevent_resize)
+        self.table_matchs.bind("<ButtonRelease-1>", self.prevent_resize_click)
+        self.table_matchs.bind("<Motion>", self.prevent_resize)
+
+        self.table_matchs.pack()
+        self.table_matchs.bind("<Button-1>", self.selectionner_match)
+      
+   
+    # Méthode pour empêcher les colonnes de la table de changer de taille
+    def prevent_resize(self, event):
+        for col in self.table_matchs["columns"]:
+            self.table_matchs.column(col, width=self.column_widths[col], stretch=False)
+
+    def prevent_resize_click(self, event):
+        if self.table_matchs.identify_region(event.x, event.y) == "separator":
+            return "break"
+        self.prevent_resize(event)
+        
+    def setup_buttons(self):
+        button_frame = tk.Frame(self.fenetre, background="black")
+        button_frame.pack(pady=10)
+        btn_du_jour = ttk.Button(button_frame, text="Matchs du Jour", command=lambda: self.data_charge("du_jour"))
+        btn_du_jour.pack(side=tk.LEFT, padx=10, pady=50)
+        btn_tous_les_matchs = ttk.Button(button_frame, text="Tous les matchs", command=lambda: self.data_charge("tous"))
+        btn_tous_les_matchs.pack(side=tk.LEFT, padx=10, pady=50)
+
+    def afficher_message(self, message):
+        if self.lbl_erreur is not None:
+            self.lbl_erreur.destroy()
+        self.lbl_erreur = tk.Label(self.frame_inputs, fg="red", text=message)
+        self.lbl_erreur.pack()
+        self.fenetre.after(2000, lambda: self.lbl_erreur.destroy())
+
+    # Méthode pour charger les données des matchs en fonction du type spécifié
+    def data_charge(self, tipe):
+        data = self.match_logique.charger_donnes(tipe)
+        for i in self.table_matchs.get_children():
+            self.table_matchs.delete(i)
+        for row in data:
+            self.table_matchs.insert("", tk.END, text=row[0], values=row[1:])
+
+    # Méthode pour gérer la sélection d'un match dans la table
+    def selectionner_match(self, event):
+        selected_items = self.table_matchs.selection()
+        if selected_items:
+            item = selected_items[0]
+            id_match = self.table_matchs.item(item, 'text')
+            values = self.table_matchs.item(item, 'values')
+
+            self.id_match_selection = id_match
+            self.nettoyer_fenetre_donnees_match()
+
+            equipe1, equipe2, cote1, cote2 = values[0], values[1], values[5], values[6]
+            lbl_cote1 = ttk.Label(self.frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
+            lbl_cote1.pack()
+            lbl_cote2 = ttk.Label(self.frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
+            lbl_cote2.pack()
+
+            bets_data = self.match_logique.obtenir_mises(id_match)
+            teams_bets = {values[0]: 0, values[1]: 0}
+
+            for cote1, cote2, id_utilisateur in bets_data:
+                if cote1:
+                    teams_bets[values[0]] += 1
+                if cote2:
+                    teams_bets[values[1]] += 1
+
+            for team, count in teams_bets.items():
+                lbl_team = ttk.Label(self.frame_inputs, text="Nombre de mises pour " + team + ": " + str(count))
+                lbl_team.pack()
+
+            # Champs de saisie pour les commentaires et les scores
+            lbl_commentaires = ttk.Label(self.frame_inputs, text="Commentaires:")
+            lbl_commentaires.pack()
+            self.entry_commentaires = ttk.Entry(self.frame_inputs)
+            self.entry_commentaires.pack()
+
+            lbl_but1 = ttk.Label(self.frame_inputs, text="Score : " + equipe1)
+            lbl_but1.pack()
+            champ_but1 = ttk.Entry(self.frame_inputs)
+            champ_but1.pack()
+
+            lbl_but2 = ttk.Label(self.frame_inputs, text="Score : " + equipe2)
+            lbl_but2.pack()
+            champ_but2 = ttk.Entry(self.frame_inputs)
+            champ_but2.pack()
+
+            btn_save = ttk.Button(self.frame_inputs, text="Enregistrer", command=lambda: self.sauvegarder_details_match(id_match, self.entry_commentaires.get(), champ_but1.get(), champ_but2.get()))
+            btn_save.pack()
+
+            btn_fermer = ttk.Button(self.frame_inputs, text="Cloturer", command=lambda: self.fermer_match(id_match))
+            btn_fermer.pack()
+
+            btn_sortir = ttk.Button(self.frame_inputs, text="Sortir", command=self.exit)
+            btn_sortir.pack()
+        else:
+            self.nettoyer_fenetre_donnees_match()
+
+    # Méthode pour nettoyer les données affichées dans la fenêtre de détails du match
+    def nettoyer_fenetre_donnees_match(self):
+        self.id_match_selection = None
+        for widget in self.frame_inputs.winfo_children():
+            widget.destroy()
+
+    # Méthode pour enregistrer les commentaires et les scores pour un match donné
+    def sauvegarder_details_match(self, id_match, comments, goals_team1, goals_team2):
+        if not comments or not goals_team1 or not goals_team2:
+            self.afficher_message("Veuillez remplir tous les champs avant d'enregistrer.")
             return
-        
-    # Connexion à la base de données
-    conn = mysql.connector.connect(**config)
-    cursor = conn.cursor()
+        try:
+            goals_team1 = int(goals_team1)
+            goals_team2 = int(goals_team2)
+            if not (0 <= goals_team1 <= 20 and 0 <= goals_team2 <= 20):
+                self.afficher_message("Les scores doivent être des nombres entre 0 et 20.")
+                return
+        except ValueError:
+            self.afficher_message("Les scores doivent être des nombres entre 0 et 20.")
+            return
+
+        self.match_logique.enregistrer_commentaires_et_score(id_match, comments, goals_team1, goals_team2)
+        self.nettoyer_fenetre_donnees_match()
+        self.afficher_message("Commentaires et score enregistrés avec succès.")
+
+    # Méthode pour clôturer un match en mettant à jour son statut
+    def fermer_match(self, id_match):
+        if id_match is not None:
+            self.match_logique.cloturer_partie(id_match)
+            self.nettoyer_fenetre_donnees_match()
+            self.afficher_message("Match cloturé")
+        else:
+            self.afficher_message("Veuillez sélectionner un match avant de clore.")
+            
+    # Méthode pour sortir de la fenêtre des détails du match
+    def exit(self):
+        self.nettoyer_fenetre_donnees_match()
+        self.frame_inputs.pack_forget()
+        self.id_match_selection = None
+
+  
+
+if __name__ == "__main__":
+    bd_logique = BdLogique(config)
+    match_logique = MatchLogique(bd_logique)
+    app = BureauApp(match_logique)
 
-    # Mise à jour du match avec les commentaires et le score
-    query = "UPDATE matchs SET commentaires = %s, but1 = %s, but2 = %s WHERE id = %s"
-    cursor.execute(query, (commentaires, but1, but2, id_match))
-
-    # Enregistrer les modifications dans la base de données
-    conn.commit()
-
-    # Fermeture du curseur et de la connexion
-    cursor.close()
-    conn.close()
-
-    nettoyer_fenetre_donnees_match()
-
-    afficher_message("Commentaires et score enregistrés avec succès.")
-
-    fenetre.after(2000, lambda: afficher_message(""))
-
-
-# Fonction pour nettoyer la fenêtre des données du match
-def nettoyer_fenetre_donnees_match():
-    global id_match_selection, entry_commentaires, frame_inputs
-
-    id_match_selection = None
-
-   
-    for widget in frame_inputs.winfo_children():
-        widget.destroy()
-
-# Fonction pour gérer la sélection d'un match
-def selectionner_match(event):
-    global id_match_selection, entry_commentaires, frame_inputs
-
-    if frame_inputs is not None:
-        frame_inputs.pack(pady=10)
-
-    selected_items = table_matchs.selection()
-    if selected_items:
-        item = selected_items[0]
-        id_match = table_matchs.item(item, 'text')
-        values = table_matchs.item(item, 'values')
-
-        # Obtenir les données de mise pour le match sélectionné
-        donnees_mises = obtenir_mises(id_match)
-
-        # Créer un dictionnaire pour stocker les équipes et leurs comptes de mises
-        equipes_mises = {values[0]: 0, values[1]: 0}
-
-        # Compter les mises par équipe
-        for cote1, cote2, id_utilisateur in donnees_mises:
-            if cote1:
-                equipes_mises[values[0]] += 1  # Équipe 1
-            if cote2:
-                equipes_mises[values[1]] += 1  # Équipe 2
-
-        # Enregistrer l'ID du match sélectionné
-        id_match_selection = id_match
-
-        # Nettoyer la fenêtre des données du match
-        nettoyer_fenetre_donnees_match()
-
-        # Obtener les résultats
-        equipe1, equipe2, cote1, cote2 = values[0], values[1], values[5], values[6] 
-
-
-        # Créer des étiquettes pour afficher les cotisations
-        lbl_cote1 = ttk.Label(frame_inputs, text="Cote " + equipe1 + " = " + str(cote1))
-        lbl_cote1.pack()
-
-        lbl_cote2 = ttk.Label(frame_inputs, text="Cote " + equipe2 + " = " + str(cote2))
-        lbl_cote2.pack()
-
-        for equipe, compte in equipes_mises.items():
-            text_label_selection = "Nombre de mises pour " + equipe + ": " + str(compte)
-            lbl_equipe = ttk.Label(frame_inputs, text=text_label_selection)
-            lbl_equipe.pack()
-
-        # Étiquette et champ de saisie pour les commentaires
-        lbl_commentaires = ttk.Label(frame_inputs, text="Commentaires:")
-        lbl_commentaires.pack()
-        entry_commentaires = ttk.Entry(frame_inputs)
-        entry_commentaires.pack()
-
-        
-        # Étiquette et champ de saisie pour le score
-        lbl_but1 = ttk.Label(frame_inputs, text="Score : " + equipe1)
-        lbl_but1.pack()
-        entry_but1 = ttk.Entry(frame_inputs)
-        entry_but1.pack()
-
-        # Étiquette et champ de saisie pour le score
-        lbl_but2 = ttk.Label(frame_inputs, text="Score : " + equipe2)
-        lbl_but2.pack()
-        entry_but2 = ttk.Entry(frame_inputs)
-        entry_but2.pack()
-
-        # Bouton pour enregistrer les commentaires et le score
-        btn_enregistrer = ttk.Button(frame_inputs, text="Enregistrer", command=lambda: enregistrer_commentaires_et_score(id_match, entry_commentaires.get(), entry_but1.get(), entry_but2.get()))
-        btn_enregistrer.pack()
-
-        # Bouton cloturer match
-        btn_cloturer = ttk.Button(frame_inputs, text="Cloturer", command=lambda: cloturer_partie(id_match))
-        btn_cloturer.pack()
-
-        # Bouton sortir match
-        btn_sortir = ttk.Button(frame_inputs, text="Sortir", command=sortir)
-        btn_sortir.pack()
-
-    else:
-        nettoyer_fenetre_donnees_match()
-    
-        
-
-
-
-def cloturer_partie(id_match):
-    if id_match is not None:
-        # Connexion a la base de données
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor()
-
-        # Mise à jour de l'état "fin" du match à "Terminé"
-        query = "UPDATE matchs SET statut = %s WHERE id = %s"
-        cursor.execute(query, ("Terminé", id_match))
-
-        query_vainqueur = """
-            UPDATE matchs
-            SET vainqueur = CASE
-                WHEN but1 > but2 THEN equipe1
-                WHEN but1 < but2 THEN equipe2
-                ELSE '-'
-            END
-            WHERE id = %s;
-        """
-        cursor.execute(query_vainqueur, (id_match,))
-
-        # Enregistrer les modifications dans la base de données
-        conn.commit()
-
-        # Fermeture du curseur et de la connexion
-        cursor.close()
-        conn.close()
-
-        # Mettre à jour la fenêtre avec les modifications
-        nettoyer_fenetre_donnees_match()
-        
-
-        # Message de succès
-        afficher_message("Match cloturé")
-
-        fenetre.after(2000, lambda: afficher_message(""))
-
-       
-    else:
-        # Message d'erreur si aucun match n'a été sélectionné
-        afficher_message("Veuillez sélectionner un match avant de clore.")
-
-
-
-def sortir():
-    global id_match_selection, frame_inputs
-    nettoyer_fenetre_donnees_match()
-    frame_inputs.pack_forget()
-    id_match_selection = None
-   
-
-
-
-
-# Créer la fenêtre de l'application
-
-fenetre = ThemedTk(theme="adapta") 
-fenetre.title("Matchs")
-fenetre.geometry("1200x900")
-fenetre.minsize(1000,800)
-
-
-# Charger l'image de fond
-background_image = Image.open("Ressources/background3.jpg")
-background_image = background_image.resize((fenetre.winfo_screenwidth(), fenetre.winfo_screenheight()), Image.LANCZOS)
-
-background_image = ImageTk.PhotoImage(background_image)
-
-# Créer un widget Label pour afficher l'image
-label_fondo = tk.Label(fenetre, image=background_image)
-label_fondo.place(relwidth=1, relheight=1)
-
-# Créer un arbre de données avec un style amélioré
-style = ttk.Style(fenetre)
-style.configure("Custom.Treeview", highlightthickness=0, bd=0)
-style.configure("Custom.Treeview.Heading", font=('Helvetica', 10, 'bold'))
-table_matchs = ttk.Treeview(fenetre, columns=("equipe1", "equipe2", "jour", "debut", "fin"), style="Custom.Treeview")
-table_matchs["columns"] = ("equipe1", "equipe2", "jour", "debut", "fin")
-
-table_matchs["show"] = "headings"
-
-# Définir les en-têtes des colonnes
-table_matchs.heading("equipe1", text="Équipe 1")
-table_matchs.heading("equipe2", text="Équipe 2")
-table_matchs.heading("jour", text="Jour")
-table_matchs.heading("debut", text="Début")
-table_matchs.heading("fin", text="Fin")
-
-
-frame_boutons = tk.Frame(fenetre, background= "black")
-frame_boutons.pack(pady=10)
-
-# Créer les boutons et les ajouter au cadre
-btn_du_jour = ttk.Button(frame_boutons, text="Matchs du Jour", command=lambda: charger_donnes("du_jour"))
-btn_du_jour.pack(side=tk.LEFT, padx=10, pady=50)  # Utiliser side=tk.LEFT pour aligner horizontalement
-
-btn_tous_les_matchs = ttk.Button(frame_boutons, text="Tous les matchs", command=lambda: charger_donnes("tous"))
-btn_tous_les_matchs.pack(side=tk.LEFT, padx=10, pady=50)
-
-
-
-
-
-# Configurer les colonnes pour qu'elles soient fixes et non modifiables
-largeurs_colonnes = {"equipe1": 200, "equipe2": 200, "jour": 100, "debut": 100, "fin": 100}
-for colonne, largeur in largeurs_colonnes.items():
-    table_matchs.column(colonne, width=largeur, anchor=tk.CENTER)
-
-# selection de match
-table_matchs.bind("<Button-1>", selectionner_match)
-
-# Obtenir les données de la table "matchs"
-donnees_matchs_actuels = obtenir_donnees_du_jour()
-
-# Insérer les données dans l'arbre de données
-for row in donnees_matchs_actuels:
-    table_matchs.insert("", tk.END, text=row[0], values=row[1:])
-
-# Pack the treeview
-table_matchs.pack()
-
-# Frame pour afficher les informations du match sélectionné
-frame_inputs = ttk.Frame(fenetre)
-frame_inputs.pack(pady=10)
-
-# Démarrer la boucle d'événements de l'application
-fenetre.mainloop()
