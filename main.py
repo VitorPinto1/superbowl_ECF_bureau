@@ -197,7 +197,7 @@ class BureauApp:
             self.nettoyer_fenetre_donnees_match()
             self.afficher_message("Match cloturé")
         else:
-            self.afficher_message("Veuillez sélectionner un match avant de clore.")
+            self.afficher_message("Veuillez sélectionner un match avant de cloturer.")
             
     # Méthode pour sortir de la fenêtre des détails du match
     def exit(self):
