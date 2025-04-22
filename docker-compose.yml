@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  apppython-bureau:
+    image: vitorpinto500/superbowl-bureau:latest
+    container_name: superbowl-bureau
+    environment:
+      - DISPLAY=192.168.1.36
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    stdin_open: true
+    tty: true
+    platform: linux/amd64
+
