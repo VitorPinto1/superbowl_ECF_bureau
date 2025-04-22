@@ -7,6 +7,7 @@ Prérequis
 -  	Git
 -  	Python 3.9
 -  	MySQL: Le serveur de base de données MySQL doit être en cours d'exécution. AivenCloud
+-  	Docker Desktop + XQuartz pour Mac
 
 1. Installation et déploiement
 
@@ -48,6 +49,48 @@ En suivant ces étapes, vous devriez être en mesure de déployer l'application 
 - bd_logique.py : Gère les interactions avec la base de données.
 - match_logique.py : Contient la logique de l'application pour la gestion des matchs.
 - main.py : Fichier principal pour démarrer l'application et gérer l'interface utilisateur.
+- Dockerfile : Fichier pour construire l'image Docker.
+- docker-compose.yml : Lancement rapide de l'application avec Docker Compose.
+- requirements.txt : Liste des dépendances Python.
 
 
+Déploiement avec Docker
 
+Prérequis :
+
+- Docker Desktop installé
+
+- (Sur Mac) Installer XQuartz et lancer xhost + pour activer l'affichage X11.
+
+Sur Mac, avant de lancer l'application :
+
+	« xhost + »
+
+(Si besoin, récupérer votre IP locale avec ipconfig getifaddr en0.)
+
+Lancer l'application avec Docker Compose
+
+	« docker-compose up »
+
+Construction manuelle 
+Construire et lancer sans docker-compose :
+
+	«	docker build -t superbowlapp-bureau .
+		docker run -it --rm \
+			-e DISPLAY=host.docker.internal:0 \
+			-v /tmp/.X11-unix:/tmp/.X11-unix \
+			superbowlapp-bureau »
+
+(Sur Mac M1/M2 ➔ remplacer host.docker.internal par votre IP locale.)
+
+CI/CD (Automatisation)
+
+À chaque git push sur main :
+
+- L'image Docker est automatiquement construite avec GitHub Actions
+
+- L'image est poussée sur DockerHub sous : vitorpinto500/superbowlapp-bureau:latest
+
+Auteur
+
+Projet réalisé par Vitor Pinto Passionné par le développement d'applications bureautiques modernes et l'IA.
