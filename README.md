@@ -44,7 +44,7 @@ Exécutez l’application  dans le teminal :
 En suivant ces étapes, vous devriez être en mesure de déployer l'application bureautique localement et tester ses fonctionnalités.
 
 
-# Information des archives 
+Information des archives 
 
 - bd_logique.py : Gère les interactions avec la base de données.
 - match_logique.py : Contient la logique de l'application pour la gestion des matchs.
@@ -83,9 +83,7 @@ Construire et lancer sans docker-compose :
 
 (Sur Mac M1/M2 ➔ remplacer host.docker.internal par votre IP locale.)
 
-CI/CD (Automatisation)
-
-À chaque git push sur main :
+CI/CD à chaque git push sur main :
 
 - L'image Docker est automatiquement construite avec GitHub Actions
 
@@ -93,4 +91,4 @@ CI/CD (Automatisation)
 
 Auteur
 
-Projet réalisé par Vitor Pinto Passionné par le développement d'applications bureautiques modernes et l'IA.
+Projet réalisé par Vitor Pinto Passionné par le développement et l'IA.
